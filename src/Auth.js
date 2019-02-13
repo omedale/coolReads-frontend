@@ -10,15 +10,27 @@ class Auth {
       responseType: 'token id_token',
       scope: 'openid email'
     });
-
+    this.authFlag = 'isLoggedIn';
     this.login = this.login.bind(this);
     this.logout = this.logout.bind(this);
     this.handleAuthentication = this.handleAuthentication.bind(this);
     this.isAuthenticated = this.isAuthenticated.bind(this);
   }
 
+  signIn() {
+    this.auth0.authorize();
+  }
+
   login() {
     this.auth0.authorize();
+  }
+
+  signOut() {
+    localStorage.setItem(this.authFlag, JSON.stringify(false));
+    this.auth0.logout({
+      returnTo: 'http://localhost:3000',
+      clientID: 'aywzpahQ4VKJNy0Xrv3RCoUnOxhgRwK3',
+    });
   }
 
   getIdToken() {
@@ -40,9 +52,7 @@ class Auth {
 
   setSession(authResult) {
     this.idToken = authResult.idToken;
-    console.log(this.idToken);
-    // set the time that the id token will expire at
-    this.expiresAt = authResult.expiresIn * 1000 + new Date().getTime();
+    localStorage.setItem(this.authFlag, JSON.stringify(true));
   }
 
   logout() {
@@ -53,18 +63,23 @@ class Auth {
   }
 
   silentAuth() {
-    return new Promise((resolve, reject) => {
-      this.auth0.checkSession({}, (err, authResult) => {
-        if (err) return reject(err);
-        this.setSession(authResult);
-        resolve();
+    if(this.isAuthenticated()) {
+      return new Promise((resolve, reject) => {
+        this.auth0.checkSession({}, (err, authResult) => {
+          if (err) {
+            localStorage.removeItem(this.authFlag);
+            return reject(err);
+          }
+          this.setSession(authResult);
+          resolve();
+        });
       });
-    });
+    }
   }
 
   isAuthenticated() {
     // Check whether the current time is past the token's expiry time
-    return new Date().getTime() < this.expiresAt;
+    return JSON.parse(localStorage.getItem(this.authFlag));
   }
 }
 

@@ -4,10 +4,6 @@ import auth from '../Auth';
 import '../App.css';
 
 class Nav extends Component {
-  constructor(props){
-    super(props);
-  }
-
   logout = () => {
     auth.logout();
     this.props.history.replace('/');
